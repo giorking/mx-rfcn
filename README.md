@@ -1,7 +1,9 @@
-# Faster R-CNN in MXNet with distributed implementation and data parallelization
+# R-FCN in MXNet with distributed implementation and data parallelization
 -------------------------------------------------------------------
+R-FCN: Object Detection via Region-based Fully Convolutional Networks
 
-This repo is forked from https://github.com/precedenceguo/mx-rcnn, and added some new features on it:
+This repo is forked from https://github.com/tornadomeet/mx-rcnn, and added some new features on it:
+* support joint training and alternative optimization for R-FCN, ref. [train_end2end_resnext.py](train_end2end_resnext.py)
 * support approximate joint end2end training, ref. [train_end2end.py](train_end2end.py), it can  get comparable result with alternate training.
 * add DetectionList Class for any object detection dataset, you only need to prepare your annation list, ref. [detection_list.py](helper/dataset/detection_list.py).
 * fix some bugs and typos.
@@ -31,11 +33,8 @@ and Fast R-CNN. Fast R-CNN weights are used to initiate RPN for training.
 * Try out detection result by running `python demo.py --prefix final --epoch 0 --image myimage.jpg --gpu 0`.
   Suppose you have downloaded pretrained network and place the extracted file `final-0000.params` in this folder and there is an image named `myimage.jpg`.
 
-## Show Result
-* model with approximate joint end2end training
-  ![train approximate](./result.jpg)
 
-## Training and Testing Faster R-CNN
+## Training and Testing R-FCN
 * Install additional python package `scipy`.
 * Download Pascal VOC data and place them to `data` folder according to `Data Folder Structure`.
   You might want to create a symbolic link to VOCdevkit folder by `ln -s /path/to/your/VOCdevkit data/VOCdevkit`.
