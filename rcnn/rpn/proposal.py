@@ -58,6 +58,13 @@ class ProposalOperator(mx.operator.CustomOp):
         if np.isnan(scores).any():
             raise ValueError("there is nan in input scores")
         bbox_deltas = in_data[1].asnumpy()
+
+        if DEBUG:
+            print "proposal debug info: "
+            # print anchors[0:20,]
+            print bbox_deltas.shape
+            print bbox_deltas[0, 0, 0:10, 0:10]
+
         if np.isnan(bbox_deltas).any():
             raise ValueError("there is nan in input bbox_deltas")
         im_info = in_data[2].asnumpy()[0, :]
@@ -106,8 +113,14 @@ class ProposalOperator(mx.operator.CustomOp):
         # reshape to (1 * H * W * A, 1) where rows are ordered by (h, w, a)
         scores = scores.transpose((0, 2, 3, 1)).reshape((-1, 1))
 
+
+
         # Convert anchors into proposals via bbox transformations
         proposals = bbox_pred(anchors, bbox_deltas)
+        if DEBUG:
+            print "proposal debug info: "
+            print proposals[0:10,]
+
 
         # 2. clip predicted boxes to image
         proposals = clip_boxes(proposals, im_info[:2])
@@ -144,6 +157,9 @@ class ProposalOperator(mx.operator.CustomOp):
         # batch inds are 0
         batch_inds = np.zeros((proposals.shape[0], 1), dtype=np.float32)
         blob = np.hstack((batch_inds, proposals.astype(np.float32, copy=False)))
+
+        
+
         self.assign(out_data[0], req[0], blob)
         if self._output_score:
             self.assign(out_data[1], req[1], scores.astype(np.float32, copy=False))

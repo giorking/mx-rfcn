@@ -194,7 +194,8 @@ def sample_rois(roidb, fg_rois_per_image, rois_per_image, num_classes):
     labels[fg_rois_per_this_image:] = 0
     overlaps = overlaps[keep_indexes]
     rois = rois[keep_indexes]
-
+    
+    print "num class: ", num_classes
     bbox_targets, bbox_inside_weights = \
         expand_bbox_regression_targets(roidb['bbox_targets'][keep_indexes, :], num_classes)
 

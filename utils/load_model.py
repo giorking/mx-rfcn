@@ -40,14 +40,14 @@ def do_checkpoint(prefix):
         The callback function that can be passed as iter_end_callback to fit.
     """
     def _callback(iter_no, sym, arg, aux):
-        if config.TRAIN.BBOX_NORMALIZATION_PRECOMPUTED:
-            print "save model with mean/std"
-            num_classes = len(arg['bbox_pred_bias'].asnumpy()) / 4
-            means = np.tile(np.array(config.TRAIN.BBOX_MEANS), (1, num_classes))
-            stds = np.tile(np.array(config.TRAIN.BBOX_STDS), (1, num_classes))
-            arg['bbox_pred_weight'] = (arg['bbox_pred_weight'].T * mx.nd.array(stds)).T
-            arg['bbox_pred_bias'] = arg['bbox_pred_bias'] * mx.nd.array(np.squeeze(stds)) + \
-                                           mx.nd.array(np.squeeze(means))
+        #if config.TRAIN.BBOX_NORMALIZATION_PRECOMPUTED:
+        #    print "save model with mean/std"
+        #    num_classes = len(arg['bbox_pred_bias'].asnumpy()) / 4
+        #    means = np.tile(np.array(config.TRAIN.BBOX_MEANS), (1, num_classes))
+        #    stds = np.tile(np.array(config.TRAIN.BBOX_STDS), (1, num_classes))
+        #    arg['bbox_pred_weight'] = (arg['bbox_pred_weight'].T * mx.nd.array(stds)).T
+        #    arg['bbox_pred_bias'] = arg['bbox_pred_bias'] * mx.nd.array(np.squeeze(stds)) + \
+        #                                   mx.nd.array(np.squeeze(means))
         """The checkpoint function."""
         save_checkpoint(prefix, iter_no + 1, sym, arg, aux)
     return _callback
@@ -65,7 +65,7 @@ def convert_context(params, ctx):
     return new_params
 
 
-def load_param(prefix, epoch, convert=False, ctx=None):
+def load_param_rcnn(prefix, epoch, convert=False, ctx=None):
     """
     wrapper for load checkpoint
     :param prefix: Prefix of model name.
@@ -93,3 +93,34 @@ def load_param(prefix, epoch, convert=False, ctx=None):
         aux_params = convert_context(aux_params, ctx)
     return arg_params, aux_params, num_classes
 
+
+def load_param(prefix, epoch, convert=False, ctx=None):
+    """
+    wrapper for load checkpoint
+    :param prefix: Prefix of model name.
+    :param epoch: Epoch number of model we would like to load.
+    :param convert: reference model should be converted to GPU NDArray first
+    :param ctx: if convert then ctx must be designated.
+    :return: (arg_params, aux_params)
+    """
+    arg_params, aux_params = load_checkpoint(prefix, epoch)
+    num_classes = 21
+
+    means = np.tile(np.array(config.TRAIN.BBOX_MEANS), (1, 2))
+    stds = np.tile(np.array(config.TRAIN.BBOX_STDS), (1, 2))
+    repeat = arg_params['rfcn_bbox_bias'].shape[0] / means.shape[1]
+
+
+    arg_params['rfcn_bbox_weight'] = \
+            (arg_params['rfcn_bbox_weight'] *
+             mx.nd.array(np.repeat(stds, repeat).reshape((arg_params['rfcn_bbox_weight'].shape[0], 1, 1, 1))))
+    arg_params['rfcn_bbox_bias'] = \
+            (arg_params['rfcn_bbox_bias'] *
+             mx.nd.array(np.repeat(stds, repeat)) + mx.nd.array(np.repeat(means, repeat)))
+
+    if convert:
+        if ctx is None:
+            ctx = mx.cpu()
+        arg_params = convert_context(arg_params, ctx)
+        aux_params = convert_context(aux_params, ctx)
+    return arg_params, aux_params, num_classes

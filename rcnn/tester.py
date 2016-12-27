@@ -133,5 +133,8 @@ def save_all_detection(im_array, detections, imdb_classes=None, thresh=0.7):
             bbox = dets[i, :4]
             score = dets[i, -1]
             if score > thresh:
-                cv2.rectangle(im, (int(round(bbox[0])), int(round(bbox[1]))), (int(round(bbox[2])), int(round(bbox[3]))), color, 2)
+                cv2.rectangle(im, (int(round(bbox[0])), int(round(bbox[1]))), 
+                                (int(round(bbox[2])), int(round(bbox[3]))), color, 2)
+                cv2.putText(im, '%s'%imdb_classes[j], (bbox[0], bbox[1]),
+                            cv2.FONT_HERSHEY_SIMPLEX, 1.0, color, 2)
     cv2.imwrite("result.jpg", im)

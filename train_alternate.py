@@ -2,6 +2,7 @@ import argparse
 import logging
 import os
 
+import find_mxnet
 import mxnet as mx
 
 from rcnn.config import config
@@ -78,7 +79,7 @@ def parse_args():
     parser.add_argument('--pretrained', dest='pretrained', help='pretrained model prefix',
                         default=os.path.join(os.getcwd(), 'model', 'vgg16'), type=str)
     parser.add_argument('--epoch', dest='epoch', help='epoch of pretrained model',
-                        default=1, type=int)
+                        default=0, type=int)
     parser.add_argument('--gpus', dest='gpu_ids', help='GPU device to train with',
                         default='0', type=str)
     parser.add_argument('--begin_epoch', dest='begin_epoch', help='begin epoch of training',

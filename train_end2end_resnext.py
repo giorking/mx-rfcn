@@ -24,7 +24,7 @@ logger.setLevel(logging.DEBUG)
 
 def init_config():
     config.TRAIN.BG_THRESH_HI = 0.5  # TODO(verify)
-    config.TRAIN.BG_THRESH_LO = 0.1  # TODO(verify)
+    config.TRAIN.BG_THRESH_LO = 0.0  # TODO(verify)
     config.SCALES = (600, )  # for wider face detection training
     config.MAX_SIZE = 1024
     config.TRAIN.RPN_MIN_SIZE = 10
@@ -58,10 +58,21 @@ def init_model(args_params, auxs_params, train_data, sym, sym_name):
     #print input_shapes
     arg_shape, _, _ = sym.infer_shape(**input_shapes)
     #a = mx.viz.plot_network(sym, shape=input_shapes, node_attrs={"shape":'rect',"fixedsize":'false'}).view()
-    arg_shapes, output_shapes, aux_shapes = sym.infer_shape(**input_shapes)
-    arg_names = sym.list_arguments()
-    arg_shape_dic = dict(zip(arg_names, arg_shapes))
-    print output_shapes
+    #arg_shapes, output_shapes, aux_shapes = sym.infer_shape(**input_shapes)
+    #arg_names = sym.list_arguments()
+    #arg_shape_dic = dict(zip(arg_names, arg_shapes))
+    #print arg_shape_dic
+
+    internals = sym.get_internals()
+    _, out_shapes, _ = internals.infer_shape(**input_shapes)
+    #print out_shapes
+    blob_names = internals.list_outputs()
+    out_shape_dic = dict(zip(blob_names, out_shapes))
+    #print out_shape_dic
+    #print sym.get_internals().list_outputs()
+    #for blob_name in out_shape_dic:
+    #	print blob_name
+
 
 
     arg_shape_dict = dict(zip(sym.list_arguments(), arg_shape))
@@ -106,7 +117,9 @@ def metric():
 def main():
     logging.info('########## TRAIN R-FCN WITH APPROXIMATE JOINT END2END #############')
     init_config()
-    config.TRAIN.AGNOSTIC = True
+    config.TRAIN.AGNOSTIC = False
+    if args.train_rfcn:
+    	config.TRAIN.AGNOSTIC = True
     config.PIXEL_MEANS = np.array([[[0, 0, 0]]])
     if "resnext" in args.pretrained:
         # sym = resnet_50(num_class=args.num_classes, bn_mom=args.bn_mom, bn_global=True, is_train=True)  # consider background
@@ -205,9 +218,11 @@ if __name__ == '__main__':
                         default='device', type=str)
     parser.add_argument('--need-mean', action='store_true', default=False,
                         help='if true, then will minus the mean value of pixel, resnet pre-trained model do not need this')
+    parser.add_argument('--train-rfcn', action='store_true', default=True,
+                        help='if true, then will train R-FCN')
     parser.add_argument('--no-flip', action='store_true', default=False,
                         help='if true, then will flip the dataset')
-    parser.add_argument('--no-shuffle', action='store_true', default=True,
+    parser.add_argument('--no-shuffle', action='store_true', default=False,
                         help='if true, then will shuffle the dataset')
     parser.add_argument('--lr', type=float, default=0.001, help='initialization learning reate')
     parser.add_argument('--mom', type=float, default=0.9, help='momentum for sgd')

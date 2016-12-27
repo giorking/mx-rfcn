@@ -2,19 +2,24 @@ import argparse
 import os
 import numpy as np
 import cv2
+import find_mxnet
 import mxnet as mx
 from helper.processing.image_processing import resize, transform
 from helper.processing.nms import nms
 from rcnn.config import config
 from rcnn.detector import Detector
 from rcnn.symbol import get_vgg_test
+from rcnn.resnext import *
+from rcnn.resnet import *
 from rcnn.tester import vis_all_detection, save_all_detection
 from utils.load_model import load_param
 
 
 def get_net(prefix, epoch, ctx):
+    config.TRAIN.AGNOSTIC = True
     args, auxs, num_class = load_param(prefix, epoch, convert=True, ctx=ctx)
-    sym = get_vgg_test(num_classes=num_class)
+    sym = resnext_101(num_class=num_class)
+    #sym = resnet_50(num_class=num_class)
     detector = Detector(sym, ctx, args, auxs)
     return detector
 
@@ -34,7 +39,8 @@ def demo_net(detector, image_name, vis=False):
     :param image_name: image name
     :return: None
     """
-
+    config.END2END = 1
+    config.PIXEL_MEANS = np.array([[[0,0,0]]])
     config.TEST.HAS_RPN = True
     assert os.path.exists(image_name), image_name + ' not found'
     im = cv2.imread(image_name)
@@ -49,7 +55,7 @@ def demo_net(detector, image_name, vis=False):
     NMS_THRESH = 0.3
     for cls in CLASSES:
         cls_ind = CLASSES.index(cls)
-        cls_boxes = boxes[:, 4 * cls_ind:4 * (cls_ind + 1)]
+        cls_boxes = boxes[:, 4:8]
         cls_scores = scores[:, cls_ind]
         keep = np.where(cls_scores >= CONF_THRESH)[0]
         cls_boxes = cls_boxes[keep, :]

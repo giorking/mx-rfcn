@@ -2,7 +2,7 @@ import mxnet as mx
 import rpn.proposal, rpn.proposal_target
 from config import config
 
-def residual_unit(data, num_filter, stride, dim_match, name, bottle_neck=True, bn_mom=0.9, workspace=512,
+def residual_unit(data, num_filter, stride, dim_match, dilate, name, bottle_neck=True, bn_mom=0.9, workspace=512,
                   bn_global=True):
     """Return resnext Unit symbol for building resnext
     Parameters
@@ -28,9 +28,13 @@ def residual_unit(data, num_filter, stride, dim_match, name, bottle_neck=True, b
                                       no_bias=True, workspace=workspace, name=name + '_conv1')
         bn1 = mx.sym.BatchNorm(data=conv1, fix_gamma=False, eps=2e-5, momentum=bn_mom, use_global_stats=bn_global, name=name + '_bn1')
         act1 = mx.sym.Activation(data=bn1, act_type='relu', name=name + '_relu1')
-
-        
-        conv2 = mx.sym.Convolution(data=act1, num_filter=int(num_filter*0.5), num_group=32, kernel=(3,3), stride=stride, pad=(1,1),
+	
+	if dilate:
+		stride = (1, 1)
+        	conv2 = mx.sym.Convolution(data=act1, num_filter=int(num_filter*0.5), num_group=32, kernel=(3,3), stride=stride, pad=(2,2), dilate=(2, 2), 
+                                      no_bias=True, workspace=workspace, name=name + '_conv2')
+	else:
+        	conv2 = mx.sym.Convolution(data=act1, num_filter=int(num_filter*0.5), num_group=32, kernel=(3,3), stride=stride, pad=(1,1),
                                       no_bias=True, workspace=workspace, name=name + '_conv2')
         bn2 = mx.sym.BatchNorm(data=conv2, fix_gamma=False, eps=2e-5, momentum=bn_mom, use_global_stats=bn_global, name=name + '_bn2')
         act2 = mx.sym.Activation(data=bn2, act_type='relu', name=name + '_relu2')
@@ -163,7 +167,8 @@ def resnext(units, num_stage, filter_list, num_class=2, num_anchor=12, bottle_ne
     body = mx.symbol.Pooling(data=body, kernel=(3, 3), stride=(2,2), pad=(1,1), pool_type='max')
     for i in range(num_stage):
         bn_global_ = bn_global if i < num_stage-1 else False  # after roi-pooling, do not use use_global_stats
-        body = residual_unit(body, filter_list[i+1], (1 if i==0 else 2, 1 if i==0 else 2), False,
+	dilate=True if i == num_stage-1 else False
+        body = residual_unit(body, filter_list[i+1], (1 if i==0 else 2, 1 if i==0 else 2), False, dilate=dilate, 
                              name='stage%d_unit%d' % (i + 1, 1), bottle_neck=bottle_neck, workspace=workspace,
                              bn_global=bn_global_)
         for j in range(units[i]-1):
@@ -238,11 +243,12 @@ def resnext_rfcn(units, num_stage, filter_list, num_class=2, num_anchor=12, bott
     body = mx.symbol.Pooling(data=body, kernel=(3, 3), stride=(2,2), pad=(1,1), pool_type='max')
     for i in range(num_stage):
         bn_global_ = bn_global if i < num_stage-1 else False  # after roi-pooling, do not use use_global_stats
-        body = residual_unit(body, filter_list[i+1], (1 if i==0 else 2, 1 if i==0 else 2), False,
+	dilate=True if i == num_stage-1 else False
+        body = residual_unit(body, filter_list[i+1], (1 if i==0 else 2, 1 if i==0 else 2), False, dilate=dilate, 
                              name='stage%d_unit%d' % (i + 1, 1), bottle_neck=bottle_neck, workspace=workspace,
                              bn_global=bn_global_)
         for j in range(units[i]-1):
-            body = residual_unit(body, filter_list[i+1], (1,1), True, name='stage%d_unit%d' % (i + 1, j + 2),
+            body = residual_unit(body, filter_list[i+1], (1,1), True, dilate=dilate, name='stage%d_unit%d' % (i + 1, j + 2),
                                  bottle_neck=bottle_neck, workspace=workspace, bn_global=bn_global_)
         if i == num_stage - 2:
             # put RPN and ROI Pooling here, i.e.the last of stage 3
