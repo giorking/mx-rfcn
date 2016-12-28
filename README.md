@@ -39,6 +39,7 @@ and Fast R-CNN. Fast R-CNN weights are used to initiate RPN for training.
 
 
 ## Training and Testing R-FCN
+* Clone this repo:  git clone --recursive https://github.com/terrychenism/mxnet.git && cd mxnet && git checkout rfcn-rebase && make -j8
 * Install additional python package `scipy`.
 * Download Pascal VOC data and place them to `data` folder according to `Data Folder Structure`.
   You might want to create a symbolic link to VOCdevkit folder by `ln -s /path/to/your/VOCdevkit data/VOCdevkit`.
