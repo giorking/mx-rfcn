@@ -44,7 +44,7 @@ and Fast R-CNN. Fast R-CNN weights are used to initiate RPN for training.
   You might want to create a symbolic link to VOCdevkit folder by `ln -s /path/to/your/VOCdevkit data/VOCdevkit`.
 * Download ResNeXt-101 pretrained model from http://data.mxnet.io/models/imagenet/resnext/101-layers/ , and place it in `model` folder.
   `model` folder will be used to place model checkpoints along the training process.
-* Start training by running `python train_alternate.py` after VOCdevkit is ready.
+* Start training by running `python train_end2end_resnext.py` after VOCdevkit is ready.
   A typical command would be `python train_end2end_resnext.py --gpus 0`. This will train the network on the VOC07 trainval.
   More control of training process can be found in the argparse help accessed by `python train_alternate.py -h`.
 * Start testing by run `python test.py` after completing the training process.
