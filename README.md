@@ -33,7 +33,10 @@ and Fast R-CNN. Fast R-CNN weights are used to initiate RPN for training.
 * Try out detection result by running `python demo.py --prefix final --epoch 0 --image myimage.jpg --gpu 0`.
   Suppose you have downloaded pretrained network and place the extracted file `final-0000.params` in this folder and there is an image named `myimage.jpg`.
 
-
+## Show Result
+* model with approximate joint end2end training
+  ![train approximate](./result.jpg)
+  
 ## Training and Testing R-FCN
 * Install additional python package `scipy`.
 * Download Pascal VOC data and place them to `data` folder according to `Data Folder Structure`.
